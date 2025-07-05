@@ -7,9 +7,20 @@
 
 import UIKit
 
+
+protocol tweetTableViewCellDelegate: AnyObject {
+    func didTapToReplyButton()
+    func didTapToRetweetButton()
+    func didTapToLikeButton()
+    func didTapToShareButton()
+}
+
 class TweetTableViewCell: UITableViewCell {
     
     static let identifier = "TweetTableViewCell"
+    
+    
+    weak var delegate: tweetTableViewCellDelegate?
   
     
     private let avatarImageView: UIImageView = {
@@ -60,7 +71,7 @@ class TweetTableViewCell: UITableViewCell {
     private let retweetButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setImage(UIImage(systemName: "arrow.2.square"), for: .normal)
+        button.setImage(UIImage(systemName: "arrow.2.squarepath"), for: .normal)
         button.tintColor = .systemGray
         return button
     }()
@@ -76,7 +87,7 @@ class TweetTableViewCell: UITableViewCell {
     private let shareButton: UIButton = {
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setImage(UIImage(systemName: "sqaure.and.arrow.up"), for: .normal)
+        button.setImage(UIImage(systemName: "arrowshape.turn.up.forward"), for: .normal)
         button.tintColor = .systemGray
         return button
     }()
@@ -87,8 +98,40 @@ class TweetTableViewCell: UITableViewCell {
         contentView.addSubview(displayNameLabel)
         contentView.addSubview(userNameLabel)
         contentView.addSubview(tweetContentLabel)
+        contentView.addSubview(replyButton)
+        contentView.addSubview(retweetButton)
+        contentView.addSubview(likeButton)
+        contentView.addSubview(shareButton)
         configureConstraint()
+        configureButton()
         
+    }
+    
+    @objc private func didTapReply(){
+        delegate?.didTapToReplyButton()
+    }
+    
+    @objc private func didTapRetweet(){
+        delegate?.didTapToRetweetButton()
+        retweetButton.tintColor = .green
+    }
+    
+    @objc private func didTapLike(){
+        delegate?.didTapToLikeButton()
+        likeButton.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+        likeButton.tintColor = .systemPink
+    }
+    
+    @objc private func didTapShare(){
+        delegate?.didTapToShareButton()
+    }
+    
+    
+    private func  configureButton(){
+        replyButton.addTarget(self, action: #selector(didTapReply), for: .touchUpInside)
+        retweetButton.addTarget(self, action: #selector(didTapRetweet), for: .touchUpInside)
+        likeButton.addTarget(self, action: #selector(didTapLike), for: .touchUpInside)
+        shareButton.addTarget(self, action: #selector(didTapShare), for: .touchUpInside)
     }
     
     private func configureConstraint() {
@@ -112,14 +155,41 @@ class TweetTableViewCell: UITableViewCell {
         let tweetContentConstraint = [
             tweetContentLabel.leadingAnchor.constraint(equalTo: displayNameLabel.leadingAnchor),
             tweetContentLabel.topAnchor.constraint(equalTo: displayNameLabel.bottomAnchor, constant: 10),
-            tweetContentLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -15),
-            tweetContentLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -15)
+            tweetContentLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -15)
+        ]
+        
+        let replyButtonConstraint = [
+            replyButton.leadingAnchor.constraint(equalTo: tweetContentLabel.leadingAnchor),
+            replyButton.topAnchor.constraint(equalTo: tweetContentLabel.bottomAnchor , constant: 15),
+            replyButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor , constant: -15)
+        ]
+         
+        let retweetButtonConstraint = [
+            retweetButton.leadingAnchor.constraint(equalTo: replyButton.trailingAnchor , constant: 50),
+            retweetButton.centerYAnchor.constraint(equalTo: replyButton.centerYAnchor)
+
+        ]
+        let likeButtonConstraint = [
+            likeButton.leadingAnchor.constraint(equalTo: retweetButton.trailingAnchor , constant: 50),
+            likeButton.centerYAnchor.constraint(equalTo: replyButton.centerYAnchor)
+
+        ]
+        
+        let shareButtonConstraint = [
+            shareButton.leadingAnchor.constraint(equalTo: likeButton.trailingAnchor , constant: 50),
+            shareButton.centerYAnchor.constraint(equalTo: replyButton.centerYAnchor)
+
         ]
         
         NSLayoutConstraint.activate(avatarImageConstraint)
         NSLayoutConstraint.activate(displayNameConstaint)
         NSLayoutConstraint.activate(userNameConstraint)
         NSLayoutConstraint.activate(tweetContentConstraint)
+        NSLayoutConstraint.activate(replyButtonConstraint)
+        NSLayoutConstraint.activate(retweetButtonConstraint)
+        NSLayoutConstraint.activate(likeButtonConstraint)
+        NSLayoutConstraint.activate(shareButtonConstraint)
+
     }
     
     required init?(coder: NSCoder) {
