@@ -6,8 +6,13 @@
 //
 
 import UIKit
+import FirebaseAuth
+import Combine
 
 class HomeViewController: UIViewController {
+    
+    private let viewModel = HomeViewModel()
+    private var subscriptions: Set<AnyCancellable> = []
     
     private let timelineTableView: UITableView = {
         let tableView = UITableView()
@@ -21,6 +26,12 @@ class HomeViewController: UIViewController {
         timelineTableView.delegate = self
         timelineTableView.dataSource = self
         configureNavigationBar()
+        bindView()
+    }
+    
+    @objc func didSignOut(){
+        try? Auth.auth().signOut()
+        handleAuthentication()
     }
     
     override func viewDidLayoutSubviews() {
@@ -28,9 +39,34 @@ class HomeViewController: UIViewController {
         timelineTableView.frame = view.frame
     }
     
+    private func handleAuthentication() {
+        if Auth.auth().currentUser == nil {
+            let vc = UINavigationController(rootViewController: OnboardingViewController())
+            vc.modalPresentationStyle = .fullScreen
+            present(vc, animated: false)
+        }
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.isHidden = false
+        handleAuthentication()
+        viewModel.retrieveUser()
+    }
+    
+    private func completeOnboarding() {
+        let vc = ProfileDataFormViewController()
+        present(vc, animated: true)
+    }
+    
+    private func bindView() {
+        viewModel.$user.sink { [weak self] user in
+            guard let user = user else {return}
+            if !user.isUserOnboard {
+                self?.completeOnboarding()
+            }
+        }
+        .store(in: &subscriptions)
     }
     
     private func configureNavigationBar() {
@@ -46,7 +82,8 @@ class HomeViewController: UIViewController {
         
         
         let profileImage = UIImage(systemName: "person")
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: profileImage, style: .plain, target: self, action: #selector(didTapProfile))
+        navigationItem.leftBarButtonItem = UIBarButtonItem(image: profileImage, style: .plain, target: self, action: #selector(didTapProfile))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "rectangle.portrait.and.arrow.right"), style: .plain, target: self, action: #selector(didSignOut))
         
     }
     
