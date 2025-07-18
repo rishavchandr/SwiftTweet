@@ -117,4 +117,11 @@ fastlane/test_output
 
 iOSInjectionProject/
 
+# Ignore Firebase configuration file
+GoogleService-Info.plist
+
+# Firebase optional logs/debug info
+firebase_debug.log
+.crashlytics/
+
 # End of https://www.toptal.com/developers/gitignore/api/swift,macos
