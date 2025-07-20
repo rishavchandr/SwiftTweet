@@ -124,7 +124,8 @@ GoogleService-Info.plist
 firebase_debug.log
 .crashlytics/
 
-#cloudinary info
+# cloudinary info
 sceret.plist
+
 
 # End of https://www.toptal.com/developers/gitignore/api/swift,macos
