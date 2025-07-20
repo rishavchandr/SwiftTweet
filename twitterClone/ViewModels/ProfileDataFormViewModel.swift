@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import UIKit
+import Combine
 
 
 final class ProfileDataFormViewModel: ObservableObject {
@@ -14,4 +16,40 @@ final class ProfileDataFormViewModel: ObservableObject {
     @Published var username: String?
     @Published var bio: String?
     @Published var avatarPath: String?
+    @Published var imageData: UIImage?
+    @Published var isFormVaild: Bool = false
+    @Published var error: String?
+    
+    
+    private var subscription: Set<AnyCancellable> = []
+    
+    
+    func validateProfileDataForm() {
+        guard let displayName = displayName,
+              displayName.count > 2,
+              let username = username,
+              username.count > 2,
+              let bio = bio,
+              bio.count > 1,
+              imageData != nil else {
+            isFormVaild = false
+            return
+        }
+        
+        isFormVaild = true
+    }
+    
+    func uploadAvatar(){
+        guard let imageData = imageData else {return}
+        CloudinaryManager.shared.uplaodImage(upload: imageData)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                if case .failure(let error) = completion {
+                    self?.error = error.localizedDescription
+                }
+            } receiveValue: { urlString in
+                print(urlString)
+            }
+            .store(in: &subscription)
+    }
 }
