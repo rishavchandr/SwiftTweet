@@ -6,12 +6,20 @@
 //
 
 import UIKit
+import Combine
+import FirebaseAuth
+import Firebase
+import FirebaseFirestore
 
 class ProfileViewController: UIViewController {
     
-    let tableHeader = ProfileHeaderView()
+    let viewModel = ProfileViewViewModel()
+    
+    private var subscriptions: Set<AnyCancellable> = []
     
     private var isStatusBarHidden  = true
+    
+    private lazy var headerView = ProfileHeaderView(frame: CGRect(x: 0, y: 0, width: profileTableView.frame.width, height: 400))
     
     private let statusBarView: UIView = {
         let view = UIView()
@@ -36,20 +44,38 @@ class ProfileViewController: UIViewController {
         view.addSubview(statusBarView)
         profileTableView.delegate = self
         profileTableView.dataSource = self
-        tableHeader.frame =  CGRect(x: 0, y: 0, width: profileTableView.frame.width, height: 400)
-        profileTableView.tableHeaderView = tableHeader
+        profileTableView.tableHeaderView = headerView
         profileTableView.contentInsetAdjustmentBehavior = .never
         navigationController?.navigationBar.isHidden = true
         configConstraint()
+        bindView()
+        viewModel.retrieveData()
     }
     
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        profileTableView.frame = view.bounds
+    private func bindView(){
+        viewModel.$user.sink { [weak self] user in
+            guard let user = user else {return}
+            self?.headerView.displayName.text = user.displayName
+            self?.headerView.userName.text = "@\(user.username)"
+            self?.headerView.followerCountLabel.text = "\(user.followersCount)"
+            self?.headerView.followingCountLabel.text = "\(user.followingCount)"
+            self?.headerView.userBio.text = user.bio
+            self?.headerView.profileImage.setImage(from: user.avatarPath)
+            self?.headerView.joinDateLabel.text = "Joinet \(self?.viewModel.dateFormatter(with: user.createdON) ?? "")"
+        }
+        .store(in: &subscriptions)
+        
     }
     
     
     func configConstraint() {
+        
+        let profileTableViewConstraints = [
+            profileTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            profileTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            profileTableView.topAnchor.constraint(equalTo: view.topAnchor),
+            profileTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ]
         let statusBarContraint = [
             statusBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             statusBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -57,6 +83,7 @@ class ProfileViewController: UIViewController {
             statusBarView.heightAnchor.constraint(equalToConstant: view.bounds.height > 800 ? 50 : 30)
         ]
         
+        NSLayoutConstraint.activate(profileTableViewConstraints)
         NSLayoutConstraint.activate(statusBarContraint)
     }
 }

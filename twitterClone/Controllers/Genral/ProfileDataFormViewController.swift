@@ -74,7 +74,7 @@ class ProfileDataFormViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("Submit", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
-        button.backgroundColor = UIColor(red: 29/255, green: 161/255, blue: 242/255, alpha: 1)
+        button.backgroundColor = .tweeterBlueColor
         button.layer.masksToBounds = true
         button.tintColor = .white
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -124,6 +124,14 @@ class ProfileDataFormViewController: UIViewController {
         usernameTextField.addTarget(self, action: #selector(didUpdateUserName), for: .editingChanged)
         viewModel.$isFormVaild.sink { [weak self] buttonSate in
             self?.submitButton.isEnabled = buttonSate
+        }
+        .store(in: &subscriptions)
+        
+        
+        viewModel.$isOnboardingDone.sink { [weak self] success in
+            if success {
+                self?.dismiss(animated: true)
+            }
         }
         .store(in: &subscriptions)
     }

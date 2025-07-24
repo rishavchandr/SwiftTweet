@@ -83,9 +83,8 @@ class ProfileHeaderView: UIView {
         return label
     }()
     
-    private let followerCountLabel: UILabel = {
+    var followerCountLabel: UILabel = {
         let label = UILabel()
-        label.text = "1134"
         label.font = .systemFont(ofSize: 14, weight: .bold)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -101,9 +100,8 @@ class ProfileHeaderView: UIView {
         return label
     }()
     
-    private let followingCountLabel: UILabel = {
+    var followingCountLabel: UILabel = {
         let label = UILabel()
-        label.text = "12"
         label.font = .systemFont(ofSize: 14, weight: .bold)
         label.textColor = .label
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -111,32 +109,29 @@ class ProfileHeaderView: UIView {
     }()
     
     
-    private let displayName: UILabel = {
+    var displayName: UILabel = {
         let label = UILabel()
-        label.text = "Rishav"
         label.font = .systemFont(ofSize: 18, weight: .bold)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
-    private let userName: UILabel = {
+    var userName: UILabel = {
         let label = UILabel()
-        label.text = "rishav_02"
         label.textColor = .secondaryLabel
         label.font = .systemFont(ofSize: 16, weight: .regular)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
-    private let userBio: UILabel = {
+    var userBio: UILabel = {
         let label = UILabel()
-        label.text =  "We must build dikes of courage to hold back the flood of fear"
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
         return label
     }()
     
-    private let profileImage: UIImageView = {
+    var  profileImage: UIImageView = {
         let image = UIImageView()
         image.image = UIImage(systemName: "person")
         image.backgroundColor = .gray
@@ -151,7 +146,7 @@ class ProfileHeaderView: UIView {
     
     private let profileHeaderImage: UIImageView = {
         let image = UIImageView()
-        image.backgroundColor = .systemGray2
+        image.backgroundColor = .systemMint
         image.contentMode = .scaleAspectFill
         image.clipsToBounds = true
         image.layer.masksToBounds = true
@@ -159,9 +154,8 @@ class ProfileHeaderView: UIView {
         return image
     }()
     
-    private let joinDateLabel: UILabel = {
+    var joinDateLabel: UILabel = {
         let label = UILabel()
-        label.text = "Joined May 2021"
         label.textColor = .secondaryLabel
         label.font = .systemFont(ofSize: 16, weight: .regular)
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -289,7 +283,7 @@ class ProfileHeaderView: UIView {
         ]
         
         let followerCountConstraint = [
-            followerCountLabel.leadingAnchor.constraint(equalTo: followingLabel.trailingAnchor, constant: 4),
+            followerCountLabel.leadingAnchor.constraint(equalTo: followingLabel.trailingAnchor, constant: 8),
             followerCountLabel.bottomAnchor.constraint(equalTo: followingCountLabel.bottomAnchor)
         ]
         
@@ -301,7 +295,8 @@ class ProfileHeaderView: UIView {
         let sectionStackConstraint = [
             sectionStack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 25),
             sectionStack.trailingAnchor.constraint(equalTo: trailingAnchor,constant: -25),
-            sectionStack.topAnchor.constraint(equalTo: followingCountLabel.bottomAnchor,constant: 5)
+            sectionStack.topAnchor.constraint(equalTo: followingCountLabel.bottomAnchor,constant: 5),
+            sectionStack.heightAnchor.constraint(equalToConstant: 35)
         ]
         
         let indicatorConstraint = [
