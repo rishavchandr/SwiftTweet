@@ -83,6 +83,13 @@ class HomeViewController: UIViewController {
             }
         }
         .store(in: &subscriptions)
+        
+        viewModel.$tweets.sink { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.timelineTableView.reloadData()
+            }
+        }
+        .store(in: &subscriptions)
     }
     
     private func configureNavigationBar() {
@@ -131,7 +138,7 @@ class HomeViewController: UIViewController {
 
 extension HomeViewController: UITableViewDelegate , UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 10
+        return viewModel.tweets.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -140,6 +147,11 @@ extension HomeViewController: UITableViewDelegate , UITableViewDataSource {
             return UITableViewCell()
         }
         cell.delegate = self
+        let tweetIndex = viewModel.tweets[indexPath.row]
+        cell.configureTweet(displayName: tweetIndex.author.displayName,
+                            username: tweetIndex.author.username,
+                            tweetContent: tweetIndex.tweetContent,
+                            avatarPath: tweetIndex.author.avatarPath)
         
         return cell
     }

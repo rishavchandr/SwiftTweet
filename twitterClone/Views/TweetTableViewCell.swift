@@ -30,14 +30,12 @@ class TweetTableViewCell: UITableViewCell {
         imageView.layer.cornerRadius = 25
         imageView.layer.masksToBounds = true
         imageView.clipsToBounds = true
-        imageView.image = UIImage(systemName: "person")
         return imageView
         
     }()
     
     private let displayNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "Rishav"
         label.font = .systemFont(ofSize: 18, weight: .bold)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -45,7 +43,6 @@ class TweetTableViewCell: UITableViewCell {
     
     private let userNameLabel: UILabel = {
         let label = UILabel()
-        label.text = "rishav_02"
         label.textColor = .secondaryLabel
         label.font = .systemFont(ofSize: 16, weight: .regular)
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -54,7 +51,6 @@ class TweetTableViewCell: UITableViewCell {
     
     private let tweetContentLabel: UILabel = {
         let label = UILabel()
-        label.text =  "In this video we will add a custom cell to display Tweets inside the feed table view. The custom cells are going to be made with AutoLayout "                 
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
         return label
@@ -105,6 +101,13 @@ class TweetTableViewCell: UITableViewCell {
         configureConstraint()
         configureButton()
         
+    }
+    
+    func configureTweet(displayName: String , username: String , tweetContent: String , avatarPath: String){
+        displayNameLabel.text = displayName
+        userNameLabel.text = "@\(username)"
+        tweetContentLabel.text = tweetContent
+        avatarImageView.setImage(from: avatarPath)
     }
     
     @objc private func didTapReply(){

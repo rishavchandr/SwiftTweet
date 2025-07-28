@@ -83,7 +83,14 @@ class TweetComposeViewController: UIViewController {
             }
         }
         .store(in: &subscriptions)
-    }
+        
+        viewModel.$user.sink { [weak self] user in
+            guard let user = user else {return}
+            self?.tweetProfileImage.setImage(from: user.avatarPath)
+        }
+        .store(in: &subscriptions)
+        
+}
     
     @objc func didTapToTweet(){
         viewModel.dispatchTweet()
