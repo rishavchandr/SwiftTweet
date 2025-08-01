@@ -13,7 +13,16 @@ import FirebaseFirestore
 
 class ProfileViewController: UIViewController {
     
-    let viewModel = ProfileViewViewModel()
+    private var viewModel: ProfileViewViewModel
+    
+    init(viewModel: ProfileViewViewModel) {
+           self.viewModel = viewModel
+           super.init(nibName: nil, bundle: nil)
+       }
+
+       required init?(coder: NSCoder) {
+           fatalError()
+       }
     
     private var subscriptions: Set<AnyCancellable> = []
     
@@ -38,7 +47,7 @@ class ProfileViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .black
+        view.backgroundColor = .systemBackground
         navigationItem.title = "Profile"
         view.addSubview(profileTableView)
         view.addSubview(statusBarView)
@@ -49,12 +58,19 @@ class ProfileViewController: UIViewController {
         navigationController?.navigationBar.isHidden = true
         configConstraint()
         bindView()
-        viewModel.retrieveData()
+        viewModel.fetchUserTweets()
     }
     
     private func bindView(){
+        
+        viewModel.$tweets.sink { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.profileTableView.reloadData()
+            }
+        }
+        .store(in: &subscriptions)
+        
         viewModel.$user.sink { [weak self] user in
-            guard let user = user else {return}
             self?.headerView.displayName.text = user.displayName
             self?.headerView.userName.text = "@\(user.username)"
             self?.headerView.followerCountLabel.text = "\(user.followersCount)"
@@ -62,6 +78,30 @@ class ProfileViewController: UIViewController {
             self?.headerView.userBio.text = user.bio
             self?.headerView.profileImage.setImage(from: user.avatarPath)
             self?.headerView.joinDateLabel.text = "Joinet \(self?.viewModel.dateFormatter(with: user.createdON) ?? "")"
+        }
+        .store(in: &subscriptions)
+        
+        viewModel.$currentState.sink { [weak self] state in
+            switch state {
+            case .personal:
+                self?.headerView.configureButtonAsPersonal()
+            case .userIsFollwed:
+                self?.headerView.configureButtonAsFollowed()
+            case .userIsUnfollwed:
+                self?.headerView.configureButtonAsUnFollowed()
+            }
+        }
+        .store(in: &subscriptions)
+        
+        headerView.followButtonActionPublisher.sink {[weak self] state in
+            switch state {
+            case .userIsFollwed:
+                self?.viewModel.isUnfollow()
+            case .userIsUnfollwed:
+                self?.viewModel.isFollow()
+            case .personal:
+                return
+            }
         }
         .store(in: &subscriptions)
         
@@ -90,13 +130,17 @@ class ProfileViewController: UIViewController {
 
 extension ProfileViewController: UITableViewDelegate , UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 4
+        return viewModel.tweets.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: TweetTableViewCell.identifier, for: indexPath) as?
                 TweetTableViewCell else { return UITableViewCell() }
-        cell.delegate = self
+        let tweet = viewModel.tweets[indexPath.row]
+        cell.configureTweet(displayName: tweet.author.displayName,
+                            username: tweet.author.username,
+                            tweetContent: tweet.tweetContent,
+                            avatarPath: tweet.author.avatarPath)
         return cell
     }
     
@@ -114,25 +158,5 @@ extension ProfileViewController: UITableViewDelegate , UITableViewDataSource {
                 self?.statusBarView.layer.opacity = 0
             }
         }
-    }
-    
-    
-}
-
-extension ProfileViewController: tweetTableViewCellDelegate {
-    func didTapToReplyButton() {
-        
-    }
-    
-    func didTapToRetweetButton() {
-        
-    }
-    
-    func didTapToLikeButton() {
-        
-    }
-    
-    func didTapToShareButton() {
-        
     }
 }

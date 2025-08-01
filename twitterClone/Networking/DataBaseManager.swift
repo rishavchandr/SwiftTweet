@@ -20,6 +20,7 @@ class DataBaseManager {
     let db = Firestore.firestore()
     let usersPath: String = "users"
     let tweetsPath: String = "tweets"
+    let followingPath: String = "followings"
     
     func collectionUser(add user: User) -> AnyPublisher<Bool, Error> {
         let twitterUser = TweetUser(form: user)
@@ -48,6 +49,18 @@ class DataBaseManager {
             .eraseToAnyPublisher()
     }
     
+    func collectionUsers(search query: String) -> AnyPublisher<[TweetUser] , Error> {
+        db.collection(usersPath).whereField("username", isEqualTo: query)
+            .getDocuments()
+            .map(\.documents)
+            .tryMap { Snapshort in
+                try Snapshort.map({
+                    try $0.data(as: TweetUser.self)
+                })
+            }
+            .eraseToAnyPublisher()
+    }
+    
     func collectionTweets(retrieve forUserId: String) -> AnyPublisher<[Tweet] , Error> {
         db.collection(tweetsPath).whereField("authorId", isEqualTo: forUserId)
             .getDocuments()
@@ -58,5 +71,41 @@ class DataBaseManager {
                 })
             }
             .eraseToAnyPublisher()
+    }
+    
+    
+    func collectionFollowings(isFollower: String , following: String) -> AnyPublisher<Bool , Error> {
+        db.collection(followingPath)
+            .whereField("follower", isEqualTo: isFollower)
+            .whereField("following", isEqualTo: following)
+            .getDocuments()
+            .map(\.count)
+            .map {
+                $0 != 0
+            }
+            .eraseToAnyPublisher()
+    }
+    
+    func collectionFollowings(follower: String , following: String) -> AnyPublisher<Bool , Error> {
+        db.collection(followingPath).document().setData([
+            "follower" : follower,
+            "following": following
+        ])
+        .map{true}
+        .eraseToAnyPublisher()
+    }
+    
+    func collectionFollowings(delete follower: String , following: String) -> AnyPublisher<Bool , Error> {
+        db.collection(followingPath)
+            .whereField("follower", isEqualTo: follower)
+            .whereField("following", isEqualTo: following)
+            .getDocuments()
+            .map(\.documents.first)
+            .map { query in
+                query?.reference.delete(completion: nil)
+                return true
+            }
+            .eraseToAnyPublisher()
+            
     }
 }

@@ -6,9 +6,14 @@
 //
 
 import UIKit
+import Combine
 
 class ProfileHeaderView: UIView {
     
+    
+    private var currentFollowState: ProfileFollwingState = .personal
+    
+    var followButtonActionPublisher: PassthroughSubject<ProfileFollwingState , Never> = PassthroughSubject()
     
     private enum sectionTab: String {
         case tweet =  "Tweet"
@@ -171,6 +176,15 @@ class ProfileHeaderView: UIView {
         image.translatesAutoresizingMaskIntoConstraints = false
         return image
     }()
+    
+    private let followButton: UIButton = {
+        let button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .tweeterBlueColor
+        button.clipsToBounds = true
+        button.layer.cornerRadius = 20
+        return button
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -187,10 +201,20 @@ class ProfileHeaderView: UIView {
         addSubview(followingCountLabel)
         addSubview(sectionStack)
         addSubview(indicator)
+        addSubview(followButton)
         profileConfigureConstraint()
         configStacKButton()
+        configureFollowButtonAction()
     }
     
+    
+    private func configureFollowButtonAction(){
+        followButton.addTarget(self, action: #selector(didTapFollowButton), for: .touchUpInside)
+    }
+    
+    @objc func didTapFollowButton() {
+        followButtonActionPublisher.send(currentFollowState)
+    }
     
     private func configStacKButton(){
         for (i,button) in sectionStack.arrangedSubviews.enumerated() {
@@ -203,6 +227,29 @@ class ProfileHeaderView: UIView {
             }
             button.addTarget(self, action: #selector(didTapButton(_:)), for: .touchUpInside)
         }
+    }
+    
+     func configureButtonAsFollowed() {
+        followButton.setTitle("Unfollow", for: .normal)
+        followButton.backgroundColor = .systemBackground
+        followButton.layer.borderWidth = 2
+        followButton.setTitleColor(.tweeterBlueColor, for: .normal)
+        followButton.layer.borderColor = UIColor.tweeterBlueColor.cgColor
+        followButton.isHidden = false
+        currentFollowState = .userIsFollwed
+    }
+
+    func configureButtonAsUnFollowed() {
+        followButton.setTitle("Follow", for: .normal)
+        followButton.backgroundColor = .tweeterBlueColor
+        followButton.setTitleColor(.white, for: .normal)
+        followButton.layer.borderColor = UIColor.clear.cgColor
+        followButton.isHidden = false
+        currentFollowState = .userIsUnfollwed
+    }
+    
+    func configureButtonAsPersonal(){
+        followButton.isHidden = true
     }
     
     @objc private func didTapButton(_ sender: UIButton){
@@ -306,6 +353,13 @@ class ProfileHeaderView: UIView {
             indicator.heightAnchor.constraint(equalToConstant: 4)
         ]
         
+        let followButtonConstraint = [
+            followButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
+            followButton.centerYAnchor.constraint(equalTo: displayName.centerYAnchor),
+            followButton.widthAnchor.constraint(equalToConstant: 90),
+            followButton.heightAnchor.constraint(equalToConstant: 40)
+        ]
+        
         
         NSLayoutConstraint.activate(profileHeaderConstraint)
         NSLayoutConstraint.activate(profileImageConstraint)
@@ -320,6 +374,7 @@ class ProfileHeaderView: UIView {
         NSLayoutConstraint.activate(followerLabelConstraint)
         NSLayoutConstraint.activate(sectionStackConstraint)
         NSLayoutConstraint.activate(indicatorConstraint)
+        NSLayoutConstraint.activate(followButtonConstraint)
     }
     
     required init(coder: NSCoder) {
