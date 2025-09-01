@@ -15,6 +15,7 @@ final class HomeViewModel : ObservableObject {
     @Published var user: TweetUser?
     @Published var error: String?
     @Published var tweets: [Tweet] = []
+    @Published var tweet: Tweet?
     
     private var subscription: Set<AnyCancellable> = []
     
@@ -52,4 +53,45 @@ final class HomeViewModel : ObservableObject {
 
     }
     
+    
+    func likeTweet(for tweet: Tweet) {
+        guard let userId = user?.id , let tweetId = tweet.id else {return}
+        let isLike = tweet.likers.contains(userId)
+        DataBaseManager.shared.updateLike(for: tweetId, userid: userId, isLike: !isLike)
+            .sink { [weak self] completion in
+                if case .failure(let error) = completion {
+                    self?.error = error.localizedDescription
+                }
+            } receiveValue: { [weak self] _ in
+                self?.fetchTweets()
+            }
+            .store(in: &subscription)
+    }
+    
+    func retweetTweet(for tweet: Tweet) {
+        guard let userId = user?.id , let tweetId = tweet.id else {return}
+        let isRetweet = tweet.retweeters.contains(userId)
+        DataBaseManager.shared.updateRetweet(for: tweetId, userid: userId, isRetweet: !isRetweet)
+            .sink { [weak self] completion in
+                if case .failure(let error) = completion {
+                    self?.error = error.localizedDescription
+                }
+            } receiveValue: { [weak self] _ in
+                self?.fetchTweets()
+            }
+            .store(in: &subscription)
+    }
+    
+    func  fetchTweet(with tweetId: String) {
+        DataBaseManager.shared.collectionTweet(with: tweetId)
+            .sink { [weak self] completion in
+                if case .failure(let error) = completion {
+                    self?.error = error.localizedDescription
+                }
+            } receiveValue: { [weak self] tweet in
+                self?.tweet = tweet
+            }
+            .store(in: &subscription)
+
+    }
 }

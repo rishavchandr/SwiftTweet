@@ -136,11 +136,16 @@ extension ProfileViewController: UITableViewDelegate , UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: TweetTableViewCell.identifier, for: indexPath) as?
                 TweetTableViewCell else { return UITableViewCell() }
+        let currentUserId = viewModel.user.id
         let tweet = viewModel.tweets[indexPath.row]
         cell.configureTweet(displayName: tweet.author.displayName,
                             username: tweet.author.username,
                             tweetContent: tweet.tweetContent,
-                            avatarPath: tweet.author.avatarPath)
+                            avatarPath: tweet.author.avatarPath,
+                            likesCount: tweet.likesCount,
+                            retweetCount: tweet.retweetCount,
+                            isLike: tweet.likers.contains(currentUserId),
+                            isRetweet: tweet.retweeters.contains(currentUserId))
         return cell
     }
     

@@ -1,27 +1,34 @@
 //
-//  TweetTableViewCell.swift
+//  TweetViewController.swift
 //  twitterClone
 //
-//  Created by Rishav chandra on 26/06/25.
+//  Created by Rishav chandra on 01/09/25.
 //
 
 import UIKit
+import FirebaseAuth
 
-
-protocol tweetTableViewCellDelegate: AnyObject {
-    func didTapToReplyButton(at index: Int)
-    func didTapToRetweetButton(at index: Int)
-    func didTapToLikeButton(at index: Int)
-    func didTapToShareButton(at index: Int)
-}
-
-class TweetTableViewCell: UITableViewCell {
+class TweetViewController: UIViewController {
     
-    static let identifier = "TweetTableViewCell"
+    private var tweet: Tweet
     
+    init(tweet: Tweet){
+        self.tweet = tweet
+        super.init(nibName: nil, bundle: nil)
+    }
     
-    weak var delegate: tweetTableViewCellDelegate?
-  
+    private let scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.alwaysBounceVertical = true
+        return scrollView
+    }()
+    
+    private let contentView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
     
     private let avatarImageView: UIImageView = {
         let imageView = UIImageView()
@@ -115,9 +122,27 @@ class TweetTableViewCell: UITableViewCell {
         return label
     }()
     
+    private let sepratorView: UIView = {
+        let seprator = UIView()
+        seprator.translatesAutoresizingMaskIntoConstraints = false
+        seprator.backgroundColor = .lightGray
+        return seprator
+    }()
     
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    private let replyTableView: UITableView = {
+        let tableview = UITableView()
+        tableview.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        tableview.translatesAutoresizingMaskIntoConstraints = false
+        return tableview
+    }()
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        configureNavigationBar()
         contentView.addSubview(avatarImageView)
         contentView.addSubview(displayNameLabel)
         contentView.addSubview(userNameLabel)
@@ -129,20 +154,24 @@ class TweetTableViewCell: UITableViewCell {
         contentView.addSubview(commentCountLabel)
         contentView.addSubview(retweetCountLabel)
         contentView.addSubview(likeCountLabel)
+        contentView.addSubview(sepratorView)
+        contentView.addSubview(replyTableView)
+        replyTableView.delegate = self
+        replyTableView.dataSource = self
         configureConstraint()
-        configureButton()
-        
+        configureTweet()
     }
     
-    func configureTweet(displayName: String , username: String , tweetContent: String , avatarPath: String, likesCount: Int , retweetCount: Int , isLike: Bool , isRetweet: Bool){
-        displayNameLabel.text = displayName
-        userNameLabel.text = "@\(username)"
-        tweetContentLabel.text = tweetContent
-        avatarImageView.setImage(from: avatarPath)
-        likeCountLabel.text = "\(likesCount)"
-        retweetCountLabel.text = "\(retweetCount)"
+    func configureTweet(){
+        displayNameLabel.text = tweet.author.displayName
+        userNameLabel.text = "@\(tweet.author.username)"
+        tweetContentLabel.text = tweet.tweetContent
+        avatarImageView.setImage(from: tweet.author.avatarPath)
+        likeCountLabel.text = "\(tweet.likesCount)"
+        retweetCountLabel.text = "\(tweet.retweetCount)"
         
-        if isLike {
+        guard let userId = Auth.auth().currentUser?.uid else {return}
+        if tweet.likers.contains(userId) {
             likeButton.setImage(UIImage(systemName: "heart.fill"), for: .normal)
             likeButton.tintColor = .systemPink
             likeCountLabel.textColor = .systemPink
@@ -152,7 +181,7 @@ class TweetTableViewCell: UITableViewCell {
             likeCountLabel.textColor = .secondaryLabel
         }
         
-        if isRetweet {
+        if tweet.retweeters.contains(userId) {
             retweetButton.tintColor = .green
             retweetCountLabel.textColor = .green
         }else{
@@ -161,31 +190,34 @@ class TweetTableViewCell: UITableViewCell {
         }
     }
     
-    @objc private func didTapReply(){
-        delegate?.didTapToReplyButton(at: tag)
+    private func configureNavigationBar(){
+        navigationItem.title = "post"
+        navigationController?.navigationBar.prefersLargeTitles = false
+        navigationItem.largeTitleDisplayMode = .never
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(didTapBack))
     }
     
-    @objc private func didTapRetweet(){
-        delegate?.didTapToRetweetButton(at: tag)
+    @objc private func didTapBack() {
+        dismiss(animated: true)
     }
     
-    @objc private func didTapLike(){
-        delegate?.didTapToLikeButton(at: tag)
-    }
-    
-    @objc private func didTapShare(){
-        delegate?.didTapToShareButton(at: tag)
-    }
-    
-    
-    private func  configureButton(){
-        replyButton.addTarget(self, action: #selector(didTapReply), for: .touchUpInside)
-        retweetButton.addTarget(self, action: #selector(didTapRetweet), for: .touchUpInside)
-        likeButton.addTarget(self, action: #selector(didTapLike), for: .touchUpInside)
-        shareButton.addTarget(self, action: #selector(didTapShare), for: .touchUpInside)
-    }
-    
-    private func configureConstraint() {
+    private func configureConstraint(){
+        let scrollViewConstraint = [
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ]
+        
+        let contentViewContraint = [
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ]
+        
         let avatarImageConstraint = [
             avatarImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             avatarImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 14),
@@ -210,9 +242,8 @@ class TweetTableViewCell: UITableViewCell {
         ]
         
         let replyButtonConstraint = [
-            replyButton.leadingAnchor.constraint(equalTo: tweetContentLabel.leadingAnchor),
-            replyButton.topAnchor.constraint(equalTo: tweetContentLabel.bottomAnchor , constant: 15),
-            replyButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor , constant: -15)
+            replyButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            replyButton.topAnchor.constraint(equalTo: tweetContentLabel.bottomAnchor , constant: 15)
         ]
         
         let commentCountLabelContraint = [
@@ -221,7 +252,7 @@ class TweetTableViewCell: UITableViewCell {
         ]
          
         let retweetButtonConstraint = [
-            retweetButton.leadingAnchor.constraint(equalTo: commentCountLabel.trailingAnchor , constant: 40),
+            retweetButton.leadingAnchor.constraint(equalTo: commentCountLabel.trailingAnchor , constant: 70),
             retweetButton.centerYAnchor.constraint(equalTo: replyButton.centerYAnchor)
 
         ]
@@ -232,7 +263,7 @@ class TweetTableViewCell: UITableViewCell {
         ]
         
         let likeButtonConstraint = [
-            likeButton.leadingAnchor.constraint(equalTo: retweetCountLabel.trailingAnchor , constant: 40),
+            likeButton.leadingAnchor.constraint(equalTo: retweetCountLabel.trailingAnchor , constant: 70),
             likeButton.centerYAnchor.constraint(equalTo: replyButton.centerYAnchor)
 
         ]
@@ -243,11 +274,30 @@ class TweetTableViewCell: UITableViewCell {
         ]
         
         let shareButtonConstraint = [
-            shareButton.leadingAnchor.constraint(equalTo: likeCountLabel.trailingAnchor , constant: 40),
+            shareButton.leadingAnchor.constraint(equalTo: likeCountLabel.trailingAnchor , constant: 70),
             shareButton.centerYAnchor.constraint(equalTo: replyButton.centerYAnchor)
 
         ]
         
+        let sepratorViewConstraint = [
+            sepratorView.topAnchor.constraint(equalTo: replyButton.bottomAnchor , constant: 20),
+            sepratorView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            sepratorView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            sepratorView.heightAnchor.constraint(equalToConstant: 1)
+        ]
+        
+        let ReplytableViewConstrant = [
+            replyTableView.topAnchor.constraint(equalTo: sepratorView.bottomAnchor , constant: 20),
+            replyTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            replyTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            replyTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            replyTableView.heightAnchor.constraint(equalToConstant: 700)
+        ]
+        
+        
+        
+        NSLayoutConstraint.activate(scrollViewConstraint)
+        NSLayoutConstraint.activate(contentViewContraint)
         NSLayoutConstraint.activate(avatarImageConstraint)
         NSLayoutConstraint.activate(displayNameConstaint)
         NSLayoutConstraint.activate(userNameConstraint)
@@ -259,11 +309,25 @@ class TweetTableViewCell: UITableViewCell {
         NSLayoutConstraint.activate(commentCountLabelContraint)
         NSLayoutConstraint.activate(retweetCountLabelContraint)
         NSLayoutConstraint.activate(likeCountLabelContraint)
-
+        NSLayoutConstraint.activate(sepratorViewConstraint)
+        NSLayoutConstraint.activate(ReplytableViewConstrant)
     }
     
     required init?(coder: NSCoder) {
-        fatalError()
+        fatalError("init(coder:) has not been implemented")
     }
+}
 
+extension TweetViewController: UITableViewDelegate , UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 10
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        cell.textLabel?.text = "weclome to dubai"
+        return cell
+    }
+    
+    
 }

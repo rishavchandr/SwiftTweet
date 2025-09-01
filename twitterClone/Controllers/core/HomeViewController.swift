@@ -149,33 +149,47 @@ extension HomeViewController: UITableViewDelegate , UITableViewDataSource {
             return UITableViewCell()
         }
         cell.delegate = self
+        cell.tag = indexPath.row
+        guard let currentUserId = viewModel.user?.id else { return cell }
         let tweetIndex = viewModel.tweets[indexPath.row]
         cell.configureTweet(displayName: tweetIndex.author.displayName,
                             username: tweetIndex.author.username,
                             tweetContent: tweetIndex.tweetContent,
-                            avatarPath: tweetIndex.author.avatarPath)
+                            avatarPath: tweetIndex.author.avatarPath,
+                            likesCount: tweetIndex.likesCount,
+                            retweetCount: tweetIndex.retweetCount,
+                            isLike: tweetIndex.likers.contains(currentUserId),
+                            isRetweet: tweetIndex.retweeters.contains(currentUserId))
+                            
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let tweetIndex = viewModel.tweets[indexPath.row]
+        let vc = UINavigationController(rootViewController: TweetViewController(tweet: tweetIndex))
+        vc.modalPresentationStyle = .fullScreen
+        present(vc, animated: true)
     }
     
 }
 
 extension HomeViewController: tweetTableViewCellDelegate {
-    
-    func didTapToReplyButton() {
-        print("Reply")
+    func didTapToReplyButton(at index: Int) {
+        print("reply")
     }
     
-    func didTapToRetweetButton() {
-        print("Retweet")
+    func didTapToRetweetButton(at index: Int) {
+        let tweet = viewModel.tweets[index]
+        viewModel.retweetTweet(for: tweet)
     }
     
-    func didTapToLikeButton() {
-        print("Like")
+    func didTapToLikeButton(at index: Int) {
+        let tweet = viewModel.tweets[index]
+        viewModel.likeTweet(for: tweet)
     }
     
-    func didTapToShareButton() {
-        print("Share")
+    func didTapToShareButton(at index: Int) {
+        print("share")
     }
-    
 }
